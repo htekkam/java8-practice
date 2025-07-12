@@ -1,0 +1,323 @@
+--> Functional interface is an interface which contains only one abstract method.
+
+--> Lamba expressions are used to represent the instance of a functional interface.
+
+--> Core functional interfaces are Supplier, Consumer, Function, Predicate.
+
+--> consumer interface (accept())
+-----------------------------------------
+
+ --> It accepts single parameter and it can be any object and contains method called accept(T).
+ --> It does not return anything.
+
+
+	Consumer<String> c1 = (s1)-> System.out.println(s1.toUpperCase());
+		c1.accept("hari krishna");
+		Consumer<String> c2 = (s2) -> System.out.println(s2.toLowerCase());
+		c2.accept("PANDU");
+		
+		//combining c1,c2 using and then method
+		
+		
+		
+---> We can combine two consumers using andthen() and call the accept() method finally as follows.
+
+		
+		c1.andThen(c2).accept("tHariKrishTekkam");
+
+      --> Similarly BiConsumer accepts two parameters.
+	  
+	  --> andthen method works on two bi consumers which contais same type of parameters only
+	  
+	   BiConsumer<String, List<String>> personBiConsumer = (name,hobbies) -> System.out.println(name+" "+hobbies);
+		BiConsumer<String, Double> salaryBiConsumer = (name,salary) -> System.out.println(name+" "+salary);
+		List<Person> personsList = PersonRepository.getAllPersons();
+		
+		personsList.forEach((person) -> {
+			personBiConsumer.accept(person.getName(), person.getHobbies());
+			salaryBiConsumer.accept(person.getName(), person.getSalary());
+			
+		});
+
+--> Predicate (test())
+	It is a functional interface which always returns a boolean value unlike consumer/biconsumer interfaces and has a method
+   named test().
+   
+    
+  static Predicate<Person> heightGreathan140 = (person) -> person.getHeight()>=140;
+  
+--> We can combine both predicates and consumer inside a filter. Here filter accept predicates only and forEach accepts consumer only.
+
+	static Predicate<Person> heightGreathan140 = (person) -> person.getHeight()>=140;	
+	static Predicate<Person> gender = (person) -> person.getGender().equalsIgnoreCase("Male");
+	static Consumer<Person> personConsumer = (p) -> System.out.println(p.getName()+" has "+p.getHeight()+" cms height");
+
+	public static void main(String[] args) {
+		
+		List<Person> personsList = PersonRepository.getAllPersons();
+		
+		personsList.stream().filter(heightGreathan140.and(gender)).forEach(personConsumer);
+
+	}
+
+Function 
+------------------------------
+
+--> It accepts one parameter and returns one parameter.
+--> When we use andthen() f1 and f2 applied sequentially.
+--> When we use compose(),  f2 is executed first followed by f1.
+
+	static Function<String, String> f1 = (s) -> s.toUpperCase();
+	static Function<String, String> f2 = (s) -> s.concat(" features");
+	
+	System.out.println("and then result::"+f1.andThen(f2).apply("java-8"));
+	System.out.println("compose result::"+f1.compose(f2).apply("java-8"));
+	
+  Similarly in case of user defined object
+       --> defining a bifunction / function
+	   
+	    static BiFunction<List<Person>,Predicate<Person>, Map<String, Double>> biFunction = (list,predicate) ->{
+		Map<String, Double> personMap = new HashMap();
+		list.forEach((person) -> {
+			if(predicate.test(person))
+				personMap.put(person.getName(), person.getSalary());
+				
+		});
+		
+		return personMap;
+	};
+	
+	--> calling the bifunction
+	Map<String, Double> mapWithBifunction = biFunction.apply(personsData, lessThan);
+	
+
+Supplier:
+----------------------------------------
+--> It represents a supplier of results.
+
+--> It does not require any inputs but it has one parameter which indicates the return type of supplier.
+
+
+Method Reference
+----------------------------------------
+--> These are used to refer method of functional interface. It is like a short cut to lambda expression when the lambda
+    expression is used to refer a method.
+
+--> Reference to
+   --> static method 
+--------------------------
+   --> We can access the static method of the class using the syntax 
+        static Predicate<Person> heightPredicate = MethodReferenceExample::heightCheck;
+   --> instance method
+   --> constructor
+   
+Streams
+-------------------------------------------
+--> A sequence of data is called stream.
+--> Collections or Arrays provide data to stream.
+--> They don't change data, they  provide result as per the pipeline methods.
+    
+	Diff between collections and streams
+	----------------------------------------------
+	| Feature     | Collections                 | Streams                   |
+| ----------- | --------------------------- | ------------------------- |
+| Read/Write  | Read and Write              | Read only                 |
+| Evaluation  | Eagerly evaluated           | Lazily evaluated          |
+| Purpose     | Collection about Data       | About computation on data |
+| Iteration   | Iterate over collection     | Internal iteration        |
+| Reusability | Multiple iteration possible | Only once                 |
+
+--> peek() method is a debugging tool mainly used to view or inspect elements as flow through stream pipeline.
+
+--> map() method is convert one type of data to another type of data.
+
+--> flatMap () used to flatten a stream of collection and result will be a stream of collection.
+
+
+--> shortcut to assign a statement value to variable in eclispe is "cntrl+2 followed by L".
+
+Filters: (filter(predicate))
+------------------------------------------
+
+-->these are used to retrict the data.
+
+--> We can use more than one filter in a stream. Filter expects a predicate or group of predicates as input.
+
+    //creating a predicate to filter  based on height		
+		Predicate<Person> p1 = (person) -> person.getHeight()>150;
+		
+		//creating a predicate to filter based on gender
+		Predicate<Person> p2 = (person) -> person.getGender().equals(GENDER_MALE);
+		
+		//applying these p1,p2 on person repo using filters and displaying them
+		
+		PersonRepository.getAllPersons()
+		                .stream()
+		                .filter(p1.and(p2))
+		                .forEach(System.out::println);
+						
+
+reduce():
+----------------------
+---> It Applies a function to each element in the stream.
+
+--> It takes an initial parameter and a funtion to be applied. Or it can take only a funtion.
+
+   String personNames = PersonRepository.getAllPersons()
+		                .stream()
+		                .map(Person::getName)
+		                .reduce("", (a,b) -> a.concat(" ").concat(b));//initial param is "" and function is (a,b) -> a.concat(b)
+						
+						
+minBy, maxBy
+---------------------------
+--> These two methods return the min and max values from the stream.It is used with Collectors.
+-->  PersonRepository.getAllPersons()
+		                .stream()
+		                .collect(Collectors.maxBy(Comparator.comparing(Person::getHeight)));
+	
+--> In the above example the persons list is compared based on the height and the person with max height is returned.
+
+limit(range) :	
+--------------------------
+--> This method decides how many elements from a stream should be returned.
+
+--> For example: stream.limit(2) --returns the first 2 elements from the result.
+
+
+skip(range)
+-------------------------
+---> This method decides how many elements should be skipped while returning the result from a stream.
+
+---> For example stream.skip(2) skips the first 2 elements and returns the remaining elements.
+
+
+
+allMatch(predicate) , anyMatch(predicate)
+-------------------------------------------
+--> allMatch(predicate) takes predicate as input and returns true if all the elements in the stream matches the predicate. 
+	It like and condition.
+	
+--> anyMatch(predicate) takes predicate as input and returns true if any element in the stream matches the predicate. 
+It like or condition.
+
+		List<Integer> input = Arrays.asList(1,5,6,3,4,-1);
+		
+		boolean areAllNumbersPositive = input.stream().allMatch((i) -> i>0);							
+		
+		boolean isAnyNumberPositive = input.stream().anyMatch((i) -> i>0);
+
+findFirst(), findAny()
+------------------------------------------
+-->findFirst() returns the first element from the stream which matches the predicate.
+
+--> findAny() returns the any element from the stream which matches the predicate.
+
+
+Person p1 = new Person("John", 165, 2000, "Male", 2, Arrays.asList("Cricket", "Swimming", "Tennis"));
+Person p7 = new Person("Campell", 165, 1548, "Male", 1, Arrays.asList("Swimming", "Tennis"));
+
+findFirst()-->	Always returns the first element in the encounter order (especially in sequential streams).
+findAny()-->	May return any element, but in sequential streams, often returns the first (like findFirst()), 
+though this is not guaranteed in parallel streams.
+
+
+Factory methods
+------------------------------------------------
+Stream.iterate(initial value,unary operator) --> Returns infinite sequential ordered stream
+
+Stream.generate(supplier) --> Returns infinite un-ordered stream.
+
+Stream.of()  --> Sequential stream with specified values.
+
+Stream<Integer> iteratorStream = Stream.iterate(1, add).limit(11);
+
+      iteratorStream.forEach(System.out::println);
+      
+            
+      Stream.generate(new Random()::nextInt).limit(11).forEach(System.out::println);  
+      
+      
+      Stream.of("hari","krishna","tekkam").map(s-> s.toUpperCase()).forEach(System.out::println);
+
+Numeric Streams
+-----------------------------------------
+--> IntStream  --> primitive int
+--> LongStream --> primitive long
+--> DoubleStream --> primitive Double
+
+The reason for using these streams is, when we do operations like sum on normal stream with wrapper classes
+like Integer addition conversion activity is done on each Integer element to convert it to int value.This  can
+be avoided by using particular streams like IntStream, LongStream etc.
+
+
+		
+		Optional<Integer> reduce = Stream.of(1,2,3,4,5,6).reduce((a,b) -> a+b);
+		
+		int sum = reduce.isPresent() ? reduce.get():0;		
+		
+		int sumUsingIntStream = IntStream.rangeClosed(1, 6).sum();
+		
+Factory methods for Numeric streams
+-------------------------------------------
+rangeClose(int start, int end) --> generates a range of elements including 'end' element.
+
+range(int start , int end) --> generates a range of elements excluding 'end' element.
+
+Boxing and Unboxing
+----------------------------------
+
+--> In this we can convert primitive types to wrapper class and vice versa.
+	
+	static List<Integer> boxedIntStream(){
+		return IntStream.rangeClosed(1, 10) //creating primitive stream
+			   .boxed().collect(Collectors.toList()); //boxing  and  returning
+	}
+	
+	static int calculateSum(List<Integer> inputs) {
+		return inputs.stream()
+				.mapToInt(Integer::intValue) //un boxing with  maptoInt 
+				.sum();
+	}
+		
+
+joining() method
+----------------------------------------
+--> It returns a collector which concatenate each input element as a string.It has the  following variants.
+
+--> Realtime scenarios include logging,csv export, json like output, sql in clause etc.
+
+joining(), joining(delimiter),joining(delimiter, suffix,  prefix)
+
+String allNames = PersonRepository.getAllPersons()
+		.stream()
+		.map(Person::getName)
+		.collect(Collectors.joining());
+		
+		String allNamesWithDelim = PersonRepository.getAllPersons()
+		.stream()
+		.map(Person::getName)
+		.collect(Collectors.joining(",", "[", "]"));
+		
+mapping inside collect
+-------------------------------------------
+--> We can also do mapping inside collect method rather doing it separately.
+--> List<String> collect = PersonRepository.getAllPersons()
+		.stream()
+		.collect(mapping(Person::getName, Collectors.toList()));
+		
+--> We need to import static java.util.stream.Collectors.*; to achieve the functionality. 
+
+count, sum, average using Collectors
+---------------------------------------------------
+--> We can get the sum, average and count values from the steam using the pre-defined methods of Collectors.
+
+
+
+
+
+
+
+
+		
+	
