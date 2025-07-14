@@ -103,12 +103,14 @@ Method Reference
 --> These are used to refer method of functional interface. It is like a short cut to lambda expression when the lambda
     expression is used to refer a method.
 
---> Reference to
-   --> static method 
+--> Reference to static method 
 --------------------------
    --> We can access the static method of the class using the syntax 
+   
         static Predicate<Person> heightPredicate = MethodReferenceExample::heightCheck;
+        
    --> instance method
+   
    --> constructor
    
 Streams
@@ -159,9 +161,10 @@ Filters: (filter(predicate))
 
 reduce():
 ----------------------
----> It Applies a function to each element in the stream.
+---> It is a terminal operation used in the Streams API to reduce a stream of elements to a single value—like summing numbers, concatenating strings, 
+	or finding min/max.
 
---> It takes an initial parameter and a funtion to be applied. Or it can take only a funtion.
+--> It takes an initial parameter and a function to be applied. Or it can take only a function.
 
    String personNames = PersonRepository.getAllPersons()
 		                .stream()
@@ -310,7 +313,95 @@ mapping inside collect
 
 count, sum, average using Collectors
 ---------------------------------------------------
---> We can get the sum, average and count values from the steam using the pre-defined methods of Collectors.
+--> We can get the sum, average and count values from the stream using the pre-defined methods of Collectors.
+
+   System.out.println("Counting total distinct names\n in person repository using counting()");
+		
+		Long distinctNames = PersonRepository.getAllPersons()
+		.stream()
+		.map(Person::getName)
+		.distinct()
+		.collect(Collectors.counting());
+		
+		System.out.println("distinctNames::"+distinctNames);
+		
+		System.out.println("Calculating sum of all kids");
+		
+		int totalKids = PersonRepository.getAllPersons()
+		.stream()
+		.map(Person::getKids)
+		.collect(Collectors.summingInt(Integer::intValue));
+		
+		System.out.println("totalKids::"+totalKids);
+		
+		double avgSalary = PersonRepository.getAllPersons()
+		.stream()
+		.map(Person::getSalary)
+		.collect(Collectors.averagingDouble(Double::doubleValue));
+		
+		System.out.println("avgSalary::"+avgSalary);
+		
+
+Grouping in streams
+--------------------------------------------------
+--> It is used to group the elements of a stream based on a classification function 
+and collect them into a map.
+
+--> Map<String, List<Person>> collect = PersonRepository.getAllPersons().stream()
+		                .collect(Collectors.groupingBy(Person::getGender));
+		                
+--> We can also put the customized function inside groupingBy
+
+Map<String, List<Person>> groupByHeight = PersonRepository.getAllPersons().stream()
+		.collect(Collectors.groupingBy(person -> person.getHeight()>145 ? "Tallest":"Shortest"));	
+		
+--> We can do 2 level grouping also as shown in the below code.
+
+Map<String, Map<String, List<Person>>> twoLevelGrouping = PersonRepository.getAllPersons().stream()
+		.collect(Collectors.groupingBy(Person::getGender, groupingBy(p -> p.getHeight()>140 ? "Tall" :"Short")));	
+		
+--> In three level grouping we can mention the map type to be returned and collection to be collected as 2,3 parameters
+
+--> HashMap<String, List<Person>> threeLevelGrouping = PersonRepository.getAllPersons().stream()
+		.collect(Collectors.groupingBy(Person::getName, HashMap::new, Collectors.toList()));
+		
+
+-->Type1 and 3 level grouping both are same except the type of map returned. 
+
+	In type1 a 'linked hash map' is returned and in type3 'hashmap' or whatever map we mentioned will be returned.
+	
+	We can use TreeMap if we want sorted keys, and ConcurrentHashMap for thread-safe grouping.
+	
+	| Aspect                    | LinkedHashMap (default)             | HashMap (custom)                          |
+| ------------------------- | ----------------------------------- | ----------------------------------------- |
+| **Insertion Performance** | Slightly slower (maintains order)   | Faster (no ordering overhead)             |
+| **Memory Overhead**       | Slightly higher (stores order info) | Lower (no linked list for order)          |
+| **Lookup/Put time**       | \~O(1), but with ordering cost      | Pure O(1) with less internal bookkeeping  |
+| **Use Case**              | When insertion order matters        | When performance or unordered map is fine |
+
+
+--> Multilevel grouping
+
+Multi-level-grouping
+-------------------------------------
+Map<String, Map<String, Map<String, List<Person>>>> multilevelGrouping =
+				PersonRepository.getAllPersons().stream().collect(Collectors.groupingBy(
+			        Person::getGender,                            // Level 1: Gender
+			        Collectors.groupingBy(
+			            p -> p.getHeight() > 140 ? "Tall" : "Short", // Level 2: Height
+			            Collectors.groupingBy(
+			                p -> p.getSalary() > 50000 ? "High" : "Low"  // Level 3: Salary
+			            )
+			        )
+			    ));
+
+{Female={Tall={High=[Person [name=Alice, height=160, salary=82000.0, gender=Female, kids=1, hobbies=[Reading, Yoga]], Person [name=Sophia, height=158, salary=95000.0, gender=Female, kids=0, hobbies=[Painting, Tennis]], Person [name=Emily, height=162, salary=83000.0, gender=Female, kids=1, hobbies=[Reading, Running]], Person [name=Grace, height=168, salary=88000.0, gender=Female, kids=2, hobbies=[Swimming, Cricket]], Person [name=Isabel, height=161, salary=82000.0, gender=Female, kids=0, hobbies=[Painting, Cycling]], Person [name=Karen, height=163, salary=79000.0, gender=Female, kids=2, hobbies=[Yoga, Running]], Person [name=Mia, height=159, salary=73000.0, gender=Female, kids=3, hobbies=[Reading, Swimming]], Person [name=Olivia, height=164, salary=81000.0, gender=Female, kids=1, hobbies=[Painting, Cycling]], Person [name=Queenie, height=160, salary=89000.0, gender=Female, kids=2, hobbies=[Cricket, Chess]], Person [name=Sara, height=167, salary=85000.0, gender=Female, kids=0, hobbies=[Tennis, Cycling]], Person [name=Uma, height=162, salary=78000.0, gender=Female, kids=1, hobbies=[Yoga, Running]], Person [name=Wendy, height=161, salary=73000.0, gender=Female, kids=2, hobbies=[Painting, Tennis]]]}}, Male={Tall={High=[Person [name=John, height=165, salary=75000.0, gender=Male, kids=2, hobbies=[Cricket, Swimming]], Person [name=John, height=185, salary=99000.0, gender=Male, kids=2, hobbies=[Cricket, Chess]], Person [name=Bob, height=172, salary=90000.0, gender=Male, kids=3, hobbies=[Gaming, Cricket]], Person [name=Campell, height=165, salary=72000.0, gender=Male, kids=1, hobbies=[Swimming, Tennis]], Person [name=David, height=180, salary=65000.0, gender=Male, kids=2, hobbies=[Running, Cycling]], Person [name=Frank, height=175, salary=70000.0, gender=Male, kids=0, hobbies=[Gaming, Tennis]], Person [name=Henry, height=169, salary=76000.0, gender=Male, kids=3, hobbies=[Chess, Yoga]], Person [name=Jack, height=178, salary=91000.0, gender=Male, kids=1, hobbies=[Cricket, Football]], Person [name=Leo, height=170, salary=86000.0, gender=Male, kids=0, hobbies=[Chess, Gaming]], Person [name=Nathan, height=177, salary=94000.0, gender=Male, kids=2, hobbies=[Football, Tennis]], Person [name=Peter, height=180, salary=87000.0, gender=Male, kids=0, hobbies=[Gaming, Running]], Person [name=Robert, height=174, salary=92000.0, gender=Male, kids=3, hobbies=[Swimming, Yoga]], Person [name=Tom, height=176, salary=76000.0, gender=Male, kids=2, hobbies=[Chess, Football]], Person [name=Victor, height=179, salary=91000.0, gender=Male, kids=1, hobbies=[Swimming, Reading]]]}}}
+	
+Partitioning by
+---------------------------------------------------
+
+It is a collector in the Java 8 Streams API that is used to partition elements of a stream into two groups based on a boolean predicate.
+                
 
 
 

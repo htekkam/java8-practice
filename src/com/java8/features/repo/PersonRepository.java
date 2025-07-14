@@ -12,6 +12,7 @@ public class PersonRepository {
 		List<Person> people = new ArrayList<>();
 
         people.add(new Person("John", 165, 75000.0, "Male", 2, Arrays.asList("Cricket", "Swimming")));
+        people.add(new Person("John", 185, 99000.0, "Male", 2, Arrays.asList("Cricket", "Chess")));
         people.add(new Person("Alice", 160, 82000.0, "Female", 1, Arrays.asList("Reading", "Yoga")));
         people.add(new Person("Bob", 172, 90000.0, "Male", 3, Arrays.asList("Gaming", "Cricket")));
         people.add(new Person("Sophia", 158, 95000.0, "Female", 0, Arrays.asList("Painting", "Tennis")));
